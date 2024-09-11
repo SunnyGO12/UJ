@@ -6,9 +6,9 @@
     <title>Registro de Cortes de Carne - Martes</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.17.1/dist/xlsx.full.min.js"></script>
-    <!-- Incluye los SDKs de Firebase -->
-    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore.js"></script>
+    <!-- Incluye el SDK de Firebase no modular (v8.10.1) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
     <style>
         body {
@@ -64,7 +64,6 @@
             font-size: 16px;
             border: 1px solid #ccc;
             border-radius: 4px;
-            step: any;
         }
         button {
             background-color: #d9534f;
@@ -137,19 +136,22 @@
         </div>
 
         <button id="exportToExcel" class="back-button">Exportar a Excel</button>
-        <button class="back-button" onclick="window.location.href='index.html'">Volver al Menú Principal</button>
+        <button class="back-button" onclick="window.location.href='inicio.html'">Volver al Menú Principal</button>
     </div>
 
     <script>
-        // Inicializa Firebase
+        // Configuración de Firebase (v8.10.1)
         const firebaseConfig = {
-            apiKey: "TU_API_KEY",
-            authDomain: "TU_AUTH_DOMAIN",
-            projectId: "TU_PROJECT_ID",
-            storageBucket: "TU_STORAGE_BUCKET",
-            messagingSenderId: "TU_MESSAGING_SENDER_ID",
-            appId: "TU_APP_ID"
+            apiKey: "AIzaSyAXxM0o30q4ZoYNutXPb8OEIVGbSI69lpY",
+            authDomain: "limcova02.firebaseapp.com",
+            projectId: "limcova02",
+            storageBucket: "limcova02.appspot.com",
+            messagingSenderId: "521693965905",
+            appId: "1:521693965905:web:d78db812d87fa0cb511270",
+            measurementId: "G-FQG16ZQK37"
         };
+
+        // Inicializa Firebase
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
@@ -184,6 +186,7 @@
             chart.update();
         }
 
+        // Guardar y leer los datos
         function updateTotalMartes() {
             const category1 = parseFloat(document.getElementById('category1').value) || 0;
             const category2 = parseFloat(document.getElementById('category2').value) || 0;
@@ -211,80 +214,51 @@
             });
         }
 
+        // Leer los datos guardados en Firestore
+        function loadFirestoreData() {
+            const params = new URLSearchParams(window.location.search);
+            const selectedWeek = params.get('week') || 1;
+
+            // Leer los datos de Firestore
+            db.collection('cortes_carne').doc(`semana_${selectedWeek}_martes`).get().then((doc) => {
+                if (doc.exists) {
+                    const data = doc.data();
+                    document.getElementById('category1').value = data.category1 || 0;
+                    document.getElementById('category2').value = data.category2 || 0;
+                    document.getElementById('category3').value = data.category3 || 0;
+                    document.getElementById('category4').value = data.category4 || 0;
+
+                    document.getElementById('totalMartes').innerText = data.totalMartes.toFixed(2);
+                    updateChart([data.category1, data.category2, data.category3, data.category4]);
+                } else {
+                    console.log('No such document!');
+                }
+            }).catch((error) => {
+                console.error('Error al leer los datos: ', error);
+            });
+        }
+
+        // Cargar los datos al inicio
+        window.addEventListener('load', function() {
+            initializeChart();
+            loadFirestoreData();  // Cargar datos desde Firestore al inicio
+        });
+
         document.getElementById('cutsForm').addEventListener('submit', function(e) {
             e.preventDefault();
             updateTotalMartes();
+
             const category1 = parseFloat(document.getElementById('category1').value) || 0;
             const category2 = parseFloat(document.getElementById('category2').value) || 0;
             const category3 = parseFloat(document.getElementById('category3').value) || 0;
             const category4 = parseFloat(document.getElementById('category4').value) || 0;
 
-            // Actualizar gráfico y total
             updateChart([category1, category2, category3, category4]);
 
-            // Limpiar el formulario
             document.getElementById('category1').value = '';
             document.getElementById('category2').value = '';
             document.getElementById('category3').value = '';
             document.getElementById('category4').value = '';
-        });
-
-        function loadSavedData() {
-            const params = new URLSearchParams(window.location.search);
-            const selectedWeek = params.get('week') || 1;
-
-            // Recuperar datos desde Firestore
-            db.collection('cortes_carne').doc(`semana_${selectedWeek}_martes`).get().then((doc) => {
-                if (doc.exists) {
-                    const data = doc.data();
-                    const savedTotalMartes = data.totalMartes || 0;
-                    const savedCorte1 = data.category1 || 0;
-                    const savedCorte2 = data.category2 || 0;
-                    const savedCorte3 = data.category3 || 0;
-                    const savedCorte4 = data.category4 || 0;
-
-                    document.getElementById('totalMartes').innerText = savedTotalMartes.toFixed(2);
-                    updateChart([savedCorte1, savedCorte2, savedCorte3, savedCorte4]);
-                } else {
-                    console.log("No se encontraron datos guardados para esta semana.");
-                }
-            }).catch((error) => {
-                console.error("Error al recuperar datos de Firestore: ", error);
-            });
-        }
-
-        document.getElementById('exportToExcel').addEventListener('click', function() {
-            const params = new URLSearchParams(window.location.search);
-            const selectedWeek = params.get('week') || 1;
-
-            db.collection('cortes_carne').doc(`semana_${selectedWeek}_martes`).get().then((doc) => {
-                if (doc.exists) {
-                    const data = doc.data();
-                    const wb = XLSX.utils.book_new();
-                    const ws_data = [
-                        ['Corte Musculo Rojo', 'Corte Conectivo', 'Corte Graso', 'Corte Vascular', `Total Martes Semana ${selectedWeek}`],
-                        [
-                            data.category1 || 0,
-                            data.category2 || 0,
-                            data.category3 || 0,
-                            data.category4 || 0,
-                            data.totalMartes || 0
-                        ]
-                    ];
-                    const ws = XLSX.utils.aoa_to_sheet(ws_data);
-                    XLSX.utils.book_append_sheet(wb, ws, `Datos de Cortes Semana ${selectedWeek}`);
-                    XLSX.writeFile(wb, `RegistroCortesMartes_Semana${selectedWeek}.xlsx`);
-                } else {
-                    alert('No hay datos para exportar.');
-                }
-            }).catch((error) => {
-                console.error('Error al exportar datos de Firestore: ', error);
-            });
-        });
-
-        window.addEventListener('load', function() {
-            initializeChart();
-            loadSavedData();
         });
     </script>
 </body>
