@@ -6,9 +6,9 @@
     <title>Registro de Cortes de Carne - Lunes</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.17.1/dist/xlsx.full.min.js"></script>
-    <!-- Incluye los SDKs de Firebase -->
-    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore.js"></script>
+    <!-- Incluye los SDKs de Firebase (compatibilidad con sintaxis antigua) -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
 
     <style>
         body {
@@ -143,12 +143,12 @@
     <script>
         // Inicializa Firebase
         const firebaseConfig = {
-			  apiKey: "AIzaSyCVyupHgxAFJkVAw9M_-IZ7fmhsZlTLw4Q",
-			  authDomain: "limcova01.firebaseapp.com",
-			  projectId: "limcova01",
-			  storageBucket: "limcova01.appspot.com",
-			  messagingSenderId: "343953987852",
-			  appId: "1:343953987852:web:8b5cbbee10045401ee9129"
+            apiKey: "AIzaSyCVyupHgxAFJkVAw9M_-IZ7fmhsZlTLw4Q",
+            authDomain: "limcova01.firebaseapp.com",
+            projectId: "limcova01",
+            storageBucket: "limcova01.appspot.com",
+            messagingSenderId: "343953987852",
+            appId: "1:343953987852:web:8b5cbbee10045401ee9129"
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
