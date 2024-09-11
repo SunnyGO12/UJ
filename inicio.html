@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Limcova - Cortes de Carne y Monitoreo</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.17.1/dist/xlsx.full.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            background-color: #e9f2f9;
+        }
+
+        footer {
+            background-color: #333;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        header {
+            background-color: #333;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        header img {
+            max-width: 80px;
+            height: auto;
+            vertical-align: middle;
+            margin-right: 10px;
+        }
+
+        header h1 {
+            display: inline;
+            font-size: 26px;
+            margin: 0;
+            font-weight: 600;
+        }
+
+        header button {
+            background-color: #c8102e;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 30px;
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-weight: 600;
+            transition: background-color 0.3s, box-shadow 0.3s;
+        }
+
+        header button:hover {
+            background-color: #a21a2d;
+            box-shadow: 0 8px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        nav {
+            background-color: #333;
+        }
+
+        nav ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            text-align: center;
+            display: flex;
+            justify-content: center;
+            padding: 20px 0;
+        }
+
+        nav ul li {
+            margin: 0 20px;
+        }
+
+        nav ul li a {
+            display: block;
+            padding: 10px 20px;
+            color: white;
+            text-decoration: none;
+            font-size: 16px;
+            font-weight: 600;
+            background-color: #777;
+            border-radius: 25px;
+            transition: background-color 0.3s, box-shadow 0.3s;
+        }
+
+        nav ul li a:hover {
+            background-color: #999;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .charts {
+            text-align: center;
+            margin-top: 40px;
+        }
+
+        .chart {
+            width: 100%;
+            height: 600px;
+            margin: 0 auto;
+        }
+
+        .dropdown {
+            display: flex;
+            justify-content: flex-end;
+            padding: 10px;
+            margin-top: 20px;
+        }
+
+        .dropdown select {
+            padding: 10px;
+            font-size: 16px;
+            border-radius: 5px;
+            background-color: #333;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        button {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            cursor: pointer;
+            margin: 10px;
+            border-radius: 30px;
+            transition: background-color 0.3s, box-shadow 0.3s;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        button:hover {
+            background-color: #218838;
+            box-shadow: 0 8px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        #weekButtons {
+            text-align: center;
+            margin: 20px 0;
+            border-bottom: 2px solid #333;
+        }
+
+        #weekButtons button {
+            background-color: transparent;
+            color: #333;
+            border: none;
+            padding: 10px 20px;
+            margin: 0;
+            font-size: 16px;
+            font-weight: 600;
+            border-bottom: 4px solid transparent;
+            cursor: pointer;
+            transition: border-bottom 0.3s, color 0.3s;
+        }
+
+        #weekButtons button.active {
+            color: #0066cc;
+            border-bottom: 4px solid #0066cc;
+        }
+
+        #weekButtons button:hover {
+            color: #e67e22;
+            border-bottom: 4px solid #e67e22;
+        }
+
+        #dayButtons {
+            text-align: center;
+            margin: 0px 0;
+        }
+
+        #dayButtons button {
+            background-color: transparent;
+            color: #333;
+            border: none;
+            padding: 10px 20px;
+            margin: 0;
+            font-size: 16px;
+            font-weight: 600;
+            border-bottom: 4px solid transparent;
+            cursor: pointer;
+            transition: border-bottom 0.3s, color 0.3s;
+        }
+
+        #dayButtons button.active {
+            color: #0066cc;
+            border-bottom: 4px solid #0066cc;
+        }
+
+        #dayButtons button:hover {
+            color: #e67e22;
+            border-bottom: 4px solid #e67e22;
+        }
+
+        .center-buttons {
+            text-align: center;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <img src="logotipo.png" alt="Logotipo de Limcova">
+        <h1>Limcova - Cortes de Carne y Monitoreo</h1>
+        <button id="closeSessionButton">Cerrar Sección</button>
+    </header>
+
+    <nav>
+        <ul>
+            <li><a href="inicio.html">Inicio</a></li>
+            <li><a href="ingresar-cortes.html">Ingresar Cortes</a></li>
+            <li><a href="historial.html">Historial</a></li>
+            <li><a href="monitoreo.html">Monitoreo</a></li>
+        </ul>
+    </nav>
+
+    <div id="weekButtons">
+        <button onclick="toggleWeek(1)">Semana 1</button>
+        <button onclick="toggleWeek(2)">Semana 2</button>
+        <button onclick="toggleWeek(3)">Semana 3</button>
+        <button onclick="toggleWeek(4)">Semana 4</button>
+        <button onclick="toggleWeek(5)">Semana 5</button>
+    </div>
+
+    <div id="dayButtons">
+        <a href="lunes.html?week=1"><button>Lunes</button></a>
+        <a href="martes.html?week=1"><button>Martes</button></a>
+        <a href="miercoles.html?week=1"><button>Miércoles</button></a>
+        <a href="jueves.html?week=1"><button>Jueves</button></a>
+        <a href="viernes.html?week=1"><button>Viernes</button></a>
+        <a href="sabado.html?week=1"><button>Sábado</button></a>
+    </div>
+
+    <main>
+        <section id="history">
+            <h2>Resumen Total de Cortes de Carne</h2>
+            <div class="dropdown">
+                <select id="weekDropdown" onchange="loadSelectedWeekData()">
+                    <option value="1">Semana 1</option>
+                    <option value="2">Semana 2</option>
+                    <option value="3">Semana 3</option>
+                    <option value="4">Semana 4</option>
+                    <option value="5">Semana 5</option>
+                </select>
+            </div>
+
+            <div class="charts">
+                <canvas id="totalMeatCutsChart" class="chart"></canvas>
+            </div>
+            <div class="charts">
+                <canvas id="weeklyCutsChart" class="chart"></canvas>
+            </div>
+
+            <div class="center-buttons">
+                <button onclick="downloadExcel()">Exportar a XLS</button>
+                <button onclick="printCharts()">Imprimir Gráficas</button>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2024 Limcova. Todos los derechos reservados.</p>
+    </footer>
+
+<script>
+    let totalMeatCutsChart;
+    let weeklyCutsChart;
+    let activeWeek = null;
+
+    // Configuración de Firebase
+    const firebaseConfig = {
+        apiKey: "AIzaSyAXxM0o30q4ZoYNutXPb8OEIVGbSI69lpY",
+        authDomain: "limcova02.firebaseapp.com",
+        projectId: "limcova02",
+        storageBucket: "limcova02.appspot.com",
+        messagingSenderId: "521693965905",
+        appId: "1:521693965905:web:d78db812d87fa0cb511270",
+        measurementId: "G-FQG16ZQK37"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    function toggleWeek(weekNumber) {
+        const weekButtons = document.querySelectorAll('#weekButtons button');
+        const links = document.querySelectorAll('#dayButtons a');
+
+        links.forEach(link => {
+            const href = link.getAttribute('href');
+            const newHref = href.replace(/week=\d+/, `week=${weekNumber}`);
+            link.setAttribute('href', newHref);
+        });
+
+        if (activeWeek === weekNumber) {
+            document.getElementById('dayButtons').style.display = 'none';
+            activeWeek = null;
+            weekButtons.forEach(button => button.classList.remove('active'));
+        } else {
+            document.getElementById('dayButtons').style.display = 'block';
+            activeWeek = weekNumber;
+            weekButtons.forEach(button => button.classList.remove('active'));
+            if (activeWeek) {
+                weekButtons[weekNumber - 1].classList.add('active');
+            }
+        }
+    }
+
+    async function loadSelectedWeekData() {
+        const selectedWeek = document.getElementById("weekDropdown").value || activeWeek || 1;
+
+        // Document names in Firebase follow the format 'semana_X_dia'
+        // You will have to check for each day (lunes, martes, miércoles, etc.)
+        const days = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
+        let data = [0, 0, 0, 0, 0, 0]; // To store total cuts for each day
+
+        try {
+            // Iterate over each day to extract data from Firebase
+            for (let i = 0; i < days.length; i++) {
+                const docRef = db.collection('cortes_carne').doc(`semana_${selectedWeek}_${days[i]}`);
+                const doc = await docRef.get();
+
+                if (doc.exists) {
+                    const dayData = doc.data();
+                    data[i] = dayData[`total${days[i].charAt(0).toUpperCase() + days[i].slice(1)}`] || 0;
+                    console.log(`Datos obtenidos para el día ${days[i]} de la semana ${selectedWeek}:`, dayData);
+                } else {
+                    console.log(`No existen datos para el día ${days[i]} de la semana ${selectedWeek}`);
+                }
+            }
+
+            // Actualiza la gráfica con los datos extraídos
+            updateChart(data, `Cortes de Carne - Semana ${selectedWeek}`);
+        } catch (error) {
+            console.error('Error obteniendo datos de Firebase:', error);
+        }
+    }
+
+    async function loadWeeklyTotals() {
+        // Semana 1 a Semana 5
+        let weeklyTotals = [0, 0, 0, 0, 0]; // Para almacenar las sumas totales por semana
+        const days = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
+
+        try {
+            // Recorremos cada semana (del 1 al 5)
+            for (let week = 1; week <= 5; week++) {
+                let weeklyTotal = 0; // Total de la semana actual
+
+                // Recorremos cada día (lunes a sábado) para la semana actual
+                for (let i = 0; i < days.length; i++) {
+                    const docRef = db.collection('cortes_carne').doc(`semana_${week}_${days[i]}`);
+                    const doc = await docRef.get();
+
+                    if (doc.exists) {
+                        const dayData = doc.data();
+                        const totalDay = dayData[`total${days[i].charAt(0).toUpperCase() + days[i].slice(1)}`] || 0;
+                        weeklyTotal += totalDay; // Sumamos el total del día a la semana
+                    }
+                }
+
+                weeklyTotals[week - 1] = weeklyTotal; // Guardamos la sumatoria total de la semana
+                console.log(`Total para la semana ${week}: ${weeklyTotal}`);
+            }
+
+            // Actualiza la gráfica con los totales de las semanas
+            updateWeeklyChart(weeklyTotals);
+        } catch (error) {
+            console.error('Error obteniendo datos de Firebase:', error);
+        }
+    }
+
+    function updateWeeklyChart(data) {
+        const ctxWeeklyCuts = document.getElementById("weeklyCutsChart").getContext("2d");
+
+        if (weeklyCutsChart) {
+            weeklyCutsChart.destroy(); // Destruir el gráfico anterior si ya existe
+        }
+
+        weeklyCutsChart = new Chart(ctxWeeklyCuts, {
+            type: "line",
+            data: {
+                labels: ["Semana 1", "Semana 2", "Semana 3", "Semana 4", "Semana 5"],
+                datasets: [{
+                    label: "Total de Cortes por Semana",
+                    data: data,
+                    backgroundColor: "rgba(255, 99, 132, 0.2)",
+                    borderColor: "rgba(255, 99, 132, 1)",
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    }
+
+    function loadCharts() {
+        loadSelectedWeekData();
+        loadWeeklyTotals(); // Cargar los totales por semana
+    }
+
+    function updateChart(data, label) {
+        const ctxTotalMeatCuts = document.getElementById("totalMeatCutsChart").getContext("2d");
+
+        if (totalMeatCutsChart) {
+            totalMeatCutsChart.destroy(); // Destruir la gráfica anterior antes de crear una nueva
+        }
+
+        // Crear la nueva gráfica con los datos actualizados
+        totalMeatCutsChart = new Chart(ctxTotalMeatCuts, {
+            type: "bar",
+            data: {
+                labels: ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"],
+                datasets: [{
+                    label: label,
+                    data: data,
+                    backgroundColor: "rgba(54, 162, 235, 0.2)",
+                    borderColor: "rgba(54, 162, 235, 1)",
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    }
+
+    function downloadExcel() {
+        const selectedWeek = document.getElementById("weekDropdown").value || activeWeek || 1;
+
+        const wb = XLSX.utils.book_new();
+        const ws_data = [
+            ['Día', 'Total Corte (kg)'],
+            ['Lunes', localStorage.getItem(`week${selectedWeek}_lunes`) || 0],
+            ['Martes', localStorage.getItem(`week${selectedWeek}_martes`) || 0],
+            ['Miércoles', localStorage.getItem(`week${selectedWeek}_miercoles`) || 0],
+            ['Jueves', localStorage.getItem(`week${selectedWeek}_jueves`) || 0],
+            ['Viernes', localStorage.getItem(`week${selectedWeek}_viernes`) || 0],
+            ['Sábado', localStorage.getItem(`week${selectedWeek}_sabado`) || 0]
+        ];
+
+        const ws = XLSX.utils.aoa_to_sheet(ws_data);
+        XLSX.utils.book_append_sheet(wb, ws, `Cortes de Carne Semana ${selectedWeek}`);
+        XLSX.writeFile(wb, `RegistroCortes_Semana${selectedWeek}.xlsx`);
+    }
+
+    document.getElementById("closeSessionButton").addEventListener("click", function() {
+        window.location.href = 'index.html';
+    });
+
+    window.onload = function() {
+        loadCharts(); // Carga la primera gráfica con los días de la semana seleccionada
+    }
+
+    function printCharts() {
+        const totalMeatCutsCanvas = document.getElementById('totalMeatCutsChart');
+        const weeklyCutsCanvas = document.getElementById('weeklyCutsChart');
+
+        const totalMeatCutsImage = totalMeatCutsCanvas.toDataURL('image/jpg');
+        const weeklyCutsImage = weeklyCutsCanvas.toDataURL('image/jpg');
+
+        const linkTotalMeatCuts = document.createElement('a');
+        linkTotalMeatCuts.href = totalMeatCutsImage;
+        linkTotalMeatCuts.download = 'TotalMeatCuts.jpg';
+        linkTotalMeatCuts.click();
+
+        const linkWeeklyCuts = document.createElement('a');
+        linkWeeklyCuts.href = weeklyCutsImage;
+        linkWeeklyCuts.download = 'WeeklyCuts.jpg';
+        linkWeeklyCuts.click();
+    }
+</script>
+</body>
+</html>
