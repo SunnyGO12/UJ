@@ -3,577 +3,125 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Limcova - Cortes de Carne y Monitoreo</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.17.1/dist/xlsx.full.min.js"></script>
+    <title>Limcova - Limpiadora de Máquinas Cortadora</title>
+    <!-- Incluye el SDK de Firebase no modular -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <style>
         body {
-            font-family: 'Poppins', sans-serif;
+            font-family: 'Arial', sans-serif;
+            background-color: #f7f7f7;
+            color: #333;
             margin: 0;
             padding: 0;
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-            background-color: #e9f2f9;
         }
-
-        main, nav, #weekButtons, #dayButtons, #history {
-            display: none;
-        }
-
-        footer {
-            background-color: #333;
-            color: white;
-            padding: 20px;
-            text-align: center;
-            font-size: 14px;
-        }
-
         header {
-            background-color: #333;
-            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #c8102e;
             padding: 20px;
+            color: white;
             text-align: center;
-            position: relative;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
-
         header img {
-            max-width: 80px;
+            width: 100px;
             height: auto;
-            vertical-align: middle;
-            margin-right: 10px;
+            margin-right: 20px;
         }
-
         header h1 {
-            display: inline;
-            font-size: 26px;
-            margin: 0;
-            font-weight: 600;
+            font-size: 32px;
+            color: white;
+            text-align: center;
         }
-
-        header button {
+        .container {
+            max-width: 400px;
+            margin: 80px auto;
+            padding: 20px;
+            background-color: white;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            text-align: center;
+        }
+        input {
+            width: calc(100% - 20px);
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        button {
             background-color: #c8102e;
             color: white;
             border: none;
-            padding: 10px 20px;
+            padding: 15px;
+            font-size: 18px;
+            border-radius: 4px;
             cursor: pointer;
-            border-radius: 30px;
-            position: absolute;
-            right: 20px;
-            top: 50%;
-            transform: translateY(-50%);
-            font-weight: 600;
-            transition: background-color 0.3s, box-shadow 0.3s;
-        }
-
-        header button:hover {
-            background-color: #a21a2d;
-            box-shadow: 0 8px 12px rgba(0, 0, 0, 0.1);
-        }
-
-        nav {
-            background-color: #333;
-        }
-
-        nav ul {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-            text-align: center;
-            display: flex;
-            justify-content: center;
-            padding: 20px 0;
-        }
-
-        nav ul li {
-            margin: 0 20px;
-        }
-
-        nav ul li a {
-            display: block;
-            padding: 10px 20px;
-            color: white;
-            text-decoration: none;
-            font-size: 16px;
-            font-weight: 600;
-            background-color: #777;
-            border-radius: 25px;
-            transition: background-color 0.3s, box-shadow 0.3s;
-        }
-
-        nav ul li a:hover {
-            background-color: #999;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        }
-
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1;
-            left: 0;
-            top: 0;
             width: 100%;
-            height: 100%;
-            overflow: auto;
-            background-color: rgba(0, 0, 0, 0.4);
         }
-
-        .modal-content {
-            background-color: #b3c7e6;
-            margin: 10% auto;
-            padding: 40px;
-            border: 2px solid black;
-            width: 400px;
-            border-radius: 10px;
-            text-align: center;
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
-        }
-
-        .modal-content h2 {
-            margin-bottom: 20px;
-            color: #333;
-        }
-
-        .modal-content input[type="email"],
-        .modal-content input[type="password"] {
-            width: 90%;
-            padding: 10px;
-            margin: 10px 0;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-        }
-
-        .modal-content button {
-            background-color: #28a745;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-
-        .modal-content button:hover {
-            background-color: #218838;
-        }
-
-        .charts {
-            text-align: center;
-            margin-top: 40px;
-        }
-
-        .chart {
-            width: 100%;
-            height: 600px;
-            margin: 0 auto;
-        }
-
-        .dropdown {
-            display: flex;
-            justify-content: flex-end;
-            padding: 10px;
-            margin-top: 20px;
-        }
-
-        .dropdown select {
-            padding: 10px;
-            font-size: 16px;
-            border-radius: 5px;
-            background-color: #333;
-            color: white;
-            border: none;
-            cursor: pointer;
-        }
-
-        button {
-            background-color: #28a745;
-            color: white;
-            border: none;
-            padding: 15px 30px;
-            cursor: pointer;
-            margin: 10px;
-            border-radius: 30px;
-            transition: background-color 0.3s, box-shadow 0.3s;
-            font-size: 16px;
-            font-weight: 600;
-        }
-
         button:hover {
-            background-color: #218838;
-            box-shadow: 0 8px 12px rgba(0, 0, 0, 0.1);
+            background-color: #a21a2d;
         }
-
-        #weekButtons {
-            text-align: center;
-            margin: 20px 0;
-            border-bottom: 2px solid #333;
-        }
-
-        #weekButtons button {
-            background-color: transparent;
-            color: #333;
-            border: none;
-            padding: 10px 20px;
-            margin: 0;
-            font-size: 16px;
-            font-weight: 600;
-            border-bottom: 4px solid transparent;
-            cursor: pointer;
-            transition: border-bottom 0.3s, color 0.3s;
-        }
-
-        #weekButtons button.active {
-            color: #0066cc;
-            border-bottom: 4px solid #0066cc;
-        }
-
-        #weekButtons button:hover {
-            color: #e67e22;
-            border-bottom: 4px solid #e67e22;
-        }
-
-        #dayButtons {
-            display: none;
-            text-align: center;
-            margin: 0px 0;
-        }
-
-        #dayButtons button {
-            background-color: transparent;
-            color: #333;
-            border: none;
-            padding: 10px 20px;
-            margin: 0;
-            font-size: 16px;
-            font-weight: 600;
-            border-bottom: 4px solid transparent;
-            cursor: pointer;
-            transition: border-bottom 0.3s, color 0.3s;
-        }
-
-        #dayButtons button.active {
-            color: #0066cc;
-            border-bottom: 4px solid #0066cc;
-        }
-
-        #dayButtons button:hover {
-            color: #e67e22;
-            border-bottom: 4px solid #e67e22;
-        }
-
-        .center-buttons {
-            text-align: center;
-            margin-top: 20px;
+        .error {
+            color: red;
+            font-size: 14px;
+            margin-bottom: 20px;
         }
     </style>
 </head>
 <body>
-
-    <!-- Header -->
     <header>
         <img src="logotipo.png" alt="Logotipo de Limcova">
-        <h1>Limcova - Cortes de Carne y Monitoreo</h1>
-        <button id="closeSessionButton">Cerrar Sesión</button>
+        <h1>Limcova - Limpiadora de Máquinas Cortadora</h1>
     </header>
 
-    <!-- Menú de Navegación -->
-    <nav>
-        <ul>
-            <li><a href="index.html">Inicio</a></li>
-            <li><a href="ingresar-cortes.html">Ingresar Cortes</a></li>
-            <li><a href="historial.html">Historial</a></li>
-            <li><a href="monitoreo.html">Monitoreo</a></li>
-        </ul>
-    </nav>
-
-    <!-- Modal de Inicio de Sesión -->
-    <div id="loginModal" class="modal">
-        <div class="modal-content">
-            <h2>Iniciar Sesión</h2>
-            <input type="email" id="email" placeholder="Correo Electrónico" required>
-            <input type="password" id="password" placeholder="Contraseña" required>
-            <button onclick="login()">Iniciar Sesión</button>
-        </div>
+    <div class="container">
+        <h2>Iniciar Sesión</h2>
+        <input type="email" id="email" placeholder="Correo Electrónico" autocomplete="email" required>
+        <input type="password" id="password" placeholder="Contraseña" autocomplete="current-password" required>
+        <div id="error" class="error"></div>
+        <button id="loginButton">Iniciar Sesión</button>
     </div>
 
-    <!-- Botones para seleccionar semana -->
-    <div id="weekButtons">
-        <button onclick="toggleWeek(1)">Semana 1</button>
-        <button onclick="toggleWeek(2)">Semana 2</button>
-        <button onclick="toggleWeek(3)">Semana 3</button>
-        <button onclick="toggleWeek(4)">Semana 4</button>
-        <button onclick="toggleWeek(5)">Semana 5</button>
-    </div>
+    <script>
+        // Configuración de Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyAXxM0o30q4ZoYNutXPb8OEIVGbSI69lpY",
+            authDomain: "limcova02.firebaseapp.com",
+            projectId: "limcova02",
+            storageBucket: "limcova02.appspot.com",
+            messagingSenderId: "521693965905",
+            appId: "1:521693965905:web:d78db812d87fa0cb511270",
+            measurementId: "G-FQG16ZQK37"
+        };
 
-    <div class="dropdown">
-        <select id="weekDropdown" onchange="loadSelectedWeekData()">
-            <option value="1">Semana 1</option>
-            <option value="2">Semana 2</option>
-            <option value="3">Semana 3</option>
-            <option value="4">Semana 4</option>
-            <option value="5">Semana 5</option>
-        </select>
-    </div>
+        // Inicializa Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
 
-    <div id="dayButtons">
-        <a href="lunes.html?week=1"><button>Lunes</button></a>
-        <a href="martes.html?week=1"><button>Martes</button></a>
-        <a href="miercoles.html?week=1"><button>Miércoles</button></a>
-        <a href="jueves.html?week=1"><button>Jueves</button></a>
-        <a href="viernes.html?week=1"><button>Viernes</button></a>
-        <a href="sabado.html?week=1"><button>Sábado</button></a>
-    </div>
-
-    <!-- Contenido Principal -->
-    <main>
-        <section id="history">
-            <h2>Resumen Total de Cortes de Carne</h2>
-            <div class="charts">
-                <canvas id="totalMeatCutsChart" class="chart"></canvas>
-            </div>
-            <div class="charts">
-                <canvas id="weeklyCutsChart" class="chart"></canvas>
-            </div>
-
-            <div class="center-buttons">
-                <button onclick="downloadExcel()">Exportar a XLS</button>
-                <button onclick="printCharts()">Imprimir Gráficas</button>
-            </div>
-        </section>
-    </main>
-
-    <!-- Footer -->
-    <footer>
-        <p>&copy; 2024 Limcova. Todos los derechos reservados.</p>
-        <p>Christopher Castillo & Gabriela Concepción.</p>
-    </footer>
-
-<script>
-    let totalMeatCutsChart;
-    let weeklyCutsChart;
-    let activeWeek = null;
-
-    // Firebase configuration
-    const firebaseConfig = {
-        apiKey: "AIzaSyCVyupHgxAFJkVAw9M_-IZ7fmhsZlTLw4Q",
-        authDomain: "limcova01.firebaseapp.com",
-        projectId: "limcova01",
-        storageBucket: "limcova01.appspot.com",
-        messagingSenderId: "343953987852",
-        appId: "1:343953987852:web:8b5cbbee10045401ee9129"
-    };
-
-    // Initialize Firebase
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-
-    // Function to toggle week and show/hide day buttons
-    function toggleWeek(weekNumber) {
-        const weekButtons = document.querySelectorAll('#weekButtons button');
-
-        if (activeWeek === weekNumber) {
-            document.getElementById('dayButtons').style.display = 'none';
-            activeWeek = null;
-            weekButtons.forEach(button => button.classList.remove('active'));
-        } else {
-            document.getElementById('dayButtons').style.display = 'block';
-            activeWeek = weekNumber;
-            weekButtons.forEach(button => button.classList.remove('active'));
-            if (activeWeek) {
-                weekButtons[weekNumber - 1].classList.add('active');
+        // Manejar inicio de sesión
+        document.getElementById('loginButton').addEventListener('click', login);
+        document.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                login();
             }
-            loadSelectedWeekData();
+        });
+
+        function login() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const errorDiv = document.getElementById('error');
+            
+            auth.signInWithEmailAndPassword(email, password)
+                .then(() => {
+                    window.location.href = 'index.html'; // Redirecciona después del inicio de sesión
+                })
+                .catch(error => {
+                    errorDiv.textContent = 'Usario o contraseñas invalidos' ;
+                });
         }
-    }
-
-    // Load data for the selected week and update the first chart (Total Meat Cuts)
-    function loadSelectedWeekData() {
-        const selectedWeek = document.getElementById("weekDropdown").value;
-        db.collection("meatCuts").doc("week" + selectedWeek).get().then((doc) => {
-            if (doc.exists) {
-                const data = doc.data();
-                const weeklyData = [data.lunes, data.martes, data.miercoles, data.jueves, data.viernes, data.sabado];
-                updateTotalMeatCutsChart(weeklyData, `Cortes de Carne - Semana ${selectedWeek}`);
-            } else {
-                console.log("No data for this week");
-                updateTotalMeatCutsChart([0, 0, 0, 0, 0, 0], `Cortes de Carne - Semana ${selectedWeek}`);
-            }
-        }).catch((error) => {
-            console.log("Error getting document:", error);
-        });
-    }
-
-    // Load the summary of all weeks and update the second chart (Weekly Cuts Summary)
-    function loadWeeklyCutsChart() {
-        db.collection("meatCuts").get().then((querySnapshot) => {
-            let totalSemanas = [0, 0, 0, 0, 0];
-            querySnapshot.forEach((doc) => {
-                const data = doc.data();
-                const semanaIndex = parseInt(doc.id.replace('week', '')) - 1;
-                totalSemanas[semanaIndex] = data.lunes + data.martes + data.miercoles + data.jueves + data.viernes + data.sabado;
-            });
-            updateWeeklyCutsChart(totalSemanas);
-        });
-    }
-
-    // Function to update the first chart (Total Meat Cuts)
-    function updateTotalMeatCutsChart(data, label) {
-        const ctxTotalMeatCuts = document.getElementById("totalMeatCutsChart").getContext("2d");
-        if (totalMeatCutsChart) totalMeatCutsChart.destroy();
-        totalMeatCutsChart = new Chart(ctxTotalMeatCuts, {
-            type: "bar",
-            data: {
-                labels: ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"],
-                datasets: [{
-                    label: label,
-                    data: data,
-                    backgroundColor: "rgba(54, 162, 235, 0.2)",
-                    borderColor: "rgba(54, 162, 235, 1)",
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                scales: {
-                    y: { beginAtZero: true }
-                }
-            }
-        });
-    }
-
-    // Function to update the second chart (Weekly Cuts Summary)
-    function updateWeeklyCutsChart(data) {
-        const ctxWeeklyCuts = document.getElementById("weeklyCutsChart").getContext("2d");
-        if (weeklyCutsChart) weeklyCutsChart.destroy();
-        weeklyCutsChart = new Chart(ctxWeeklyCuts, {
-            type: "line",
-            data: {
-                labels: ["Semana 1", "Semana 2", "Semana 3", "Semana 4", "Semana 5"],
-                datasets: [{
-                    label: "Total de Cortes por Semana",
-                    data: data,
-                    backgroundColor: "rgba(255, 99, 132, 0.2)",
-                    borderColor: "rgba(255, 99, 132, 1)",
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                scales: {
-                    y: { beginAtZero: true }
-                }
-            }
-        });
-    }
-
-    // Lógica de Inicio de Sesión
-    function login() {
-        const email = document.getElementById("email").value;
-        const password = document.getElementById("password").value;
-
-        firebase.auth().signInWithEmailAndPassword(email, password)
-            .then((userCredential) => {
-                closeModal();
-                showProtectedContent();
-                loadSelectedWeekData(); // Cargar gráfica de cortes totales
-                loadWeeklyCutsChart();   // Cargar gráfica de resumen semanal
-            })
-            .catch((error) => {
-                alert("Error en el inicio de sesión: " + error.message);
-            });
-    }
-
-    // Mostrar Modal de Inicio de Sesión
-    function showModal() {
-        document.getElementById("loginModal").style.display = "block";
-    }
-
-    // Cerrar Modal de Inicio de Sesión
-    function closeModal() {
-        document.getElementById("loginModal").style.display = "none";
-    }
-
-    // Mostrar contenido protegido
-    function showProtectedContent() {
-        document.querySelector('nav').style.display = 'block';
-        document.querySelector('main').style.display = 'block';
-        document.getElementById('weekButtons').style.display = 'block';
-        document.getElementById('history').style.display = 'block';
-    }
-
-    // Ocultar contenido protegido
-    function hideProtectedContent() {
-        document.querySelector('nav').style.display = 'none';
-        document.querySelector('main').style.display = 'none';
-        document.getElementById('weekButtons').style.display = 'none';
-        document.getElementById('history').style.display = 'none';
-    }
-
-    // Cerrar sesión
-    document.getElementById("closeSessionButton").addEventListener("click", function() {
-        firebase.auth().signOut().then(() => {
-            hideProtectedContent();
-            showModal();
-            alert("Sesión cerrada");
-        }).catch((error) => {
-            alert("Error al cerrar la sesión: " + error.message);
-        });
-    });
-
-    // Load charts on window load
-    window.onload = function() {
-        firebase.auth().onAuthStateChanged(function(user) {
-            if (user) {
-                showProtectedContent();
-                loadSelectedWeekData(); // Cargar gráfica de cortes totales
-                loadWeeklyCutsChart();   // Cargar gráfica de resumen semanal
-            } else {
-                showModal();
-            }
-        });
-    };
-	
-    function downloadExcel() {
-        const selectedWeek = activeWeek;
-        if (!selectedWeek) {
-            alert('Por favor selecciona una semana.');
-            return;
-        }
-
-        // Obtener datos de Firestore
-        db.collection("meatCuts").doc("week" + selectedWeek).get().then((doc) => {
-            if (doc.exists) {
-                const data = doc.data();
-                const ws_data = [
-                    ['Día', 'Corte (kg)'],
-                    ['Lunes', data.lunes],
-                    ['Martes', data.martes],
-                    ['Miércoles', data.miercoles],
-                    ['Jueves', data.jueves],
-                    ['Viernes', data.viernes],
-                    ['Sábado', data.sabado]
-                ];
-
-                const wb = XLSX.utils.book_new();
-                const ws = XLSX.utils.aoa_to_sheet(ws_data);
-                XLSX.utils.book_append_sheet(wb, ws, `Semana ${selectedWeek}`);
-                XLSX.writeFile(wb, `Cortes_Semana_${selectedWeek}.xlsx`);
-
-                alert("Datos exportados con éxito.");
-            } else {
-                alert("No hay datos para la semana seleccionada.");
-            }
-        }).catch((error) => {
-            console.error("Error al obtener los datos de Firestore: ", error);
-            alert("Error al exportar los datos.");
-        });
-    }
-	
-</script>
+    </script>
 </body>
 </html>
